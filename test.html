@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网页计算器</title>
+</head>
+<body>
+    <label for="inputNumberOne">请输入数字1：</label>
+    <input type="number" id="inputNumberOne" name="number1">
+    
+    <br><br>
+
+    <input type="radio" name="arithmetic" id="addition" value="addition">
+    <label for="addition">➕</label>
+
+    <input type="radio" name="arithmetic" id="subtraction" value="subtraction">
+    <label for="subtraction">➖</label>
+
+    <input type="radio" name="arithmetic" id="multiplication" value="multiplication">
+    <label for="multiplication">✖</label>
+
+    <input type="radio" name="arithmetic" id="division" value="division">
+    <label for="division">➗</label>
+
+    <br><br>
+
+    <label for="inputNumberTwo">请输入数字2：</label>
+    <input type="number" id="inputNumberTwo" name="number2">
+
+    <br><br>
+
+    <p>结果：<span id="result">-</span></p>
+
+    <script>
+        const number1 = document.getElementById('inputNumberOne');
+        const number2 = document.getElementById('inputNumberTwo');
+        const result = document.getElementById('result');
+
+        function calc(){
+            const a = Number(number1.value);
+            const b = Number(number2.value);
+            const checked = document.querySelector('input[name="arithmetic"]:checked');
+
+            if (number1.value === '' || number2.value === '') {
+                result.textContent = '-';
+                return;
+            }
+
+            let value;
+            switch(checked.value){
+                case 'addition':
+                    value = a + b;
+                    break;
+
+                case 'subtraction':
+                    value = a - b;
+                    break;
+
+                case 'multiplication':
+                    value = a * b;
+                    break;
+
+                case 'division':
+                    if(b===0){
+                        result.textContent = '除数错误，不能为 0';
+                        return;
+                    }
+                    value = a / b;
+                    break;
+            }
+            result.textContent = value;
+        }
+        number1.addEventListener('input', calc);
+        number2.addEventListener('input', calc);
+        document.querySelectorAll('input[name="arithmetic"]').forEach(function (radio) {
+      radio.addEventListener('change', calc);});
+        calc();
+    </script>
+</body>
+</html>

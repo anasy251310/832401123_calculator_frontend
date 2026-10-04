@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>计算器 - 前后端分离</title>
+<style>
+body {
+  margin: 0;
+  padding: 40px 20px;
+  min-height: 100vh;
+  background: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+.card {
+  background: #4a6cf7;
+  color: #fff;
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+  max-width: 520px;
+  width: 100%;
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>计算器</h1>
+
+  <div>
+    <input type="text" id="expression" placeholder="输入表达式，如 (1+2)*3" autocomplete="off">
+    <button id="calcBtn">计算</button>
+  </div>
+
+  <div>
+    <button onclick="append('+')">+</button>
+    <button onclick="append('-')">−</button>
+    <button onclick="append('*')">×</button>
+    <button onclick="append('/')">÷</button>
+    <button onclick="append('(')">(</button>
+    <button onclick="append(')')">)</button>
+    <button onclick="clearInput()">C</button>
+  </div>
+
+  <p>结果：<span id="result">—</span></p>
+
+  <h2>计算历史</h2>
+  <ul id="historyList"><li>暂无记录</li></ul>
+</div>
+
+<script>
+const API_BASE = 'http://127.0.0.1:5000';
+const expressionInput = document.getElementById('expression');
+const calcBtn = document.getElementById('calcBtn');
+const resultSpan = document.getElementById('result');
+const historyList = document.getElementById('historyList');
+
+function append(char) { expressionInput.value += char; expressionInput.focus(); }
+function clearInput() { expressionInput.value = ''; expressionInput.focus(); }
+
+async function calculate() {
+  const expression = expressionInput.value.trim();
+  if (!expression) return;
+  calcBtn.disabled = true;
+  calcBtn.textContent = '计算中...';
+  try {
+    const response = await fetch(`${API_BASE}/api/calculate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ expression })
+    });
+    const data = await response.json();
+    if (data.success) {
+      resultSpan.textContent = data.result;
+      await loadHistory();
+    } else {
+      resultSpan.textContent = data.message;
+    }
+  } catch (error) {
+    resultSpan.textContent = '无法连接后端服务，请确认后端已启动';
+  } finally {
+    calcBtn.disabled = false;
+    calcBtn.textContent = '计算';
+  }
+}
+
+async function loadHistory() {
+  try {
+    const response = await fetch(`${API_BASE}/api/history`);
+    const data = await response.json();
+    if (!data.success || !data.history || data.history.length === 0) {
+      historyList.innerHTML = '<li>暂无记录</li>';
+      return;
+    }
+    historyList.innerHTML = data.history.map(item => `
+      <li>
+        ${escapeHtml(item.expression)} = ${item.result}
+        <span>${formatTime(item.created_at)}</span>
+        <button onclick="deleteRecord(${item.id})">删除</button>
+      </li>`).join('');
+  } catch (error) {
+    historyList.innerHTML = '<li>历史记录加载失败</li>';
+  }
+}
+
+async function deleteRecord(id) {
+  try {
+    const response = await fetch(`${API_BASE}/api/history/${id}`, { method: 'DELETE' });
+    const data = await response.json();
+    if (data.success) { await loadHistory(); }
+    else { alert('删除失败：' + data.message); }
+  } catch (error) {
+    alert('无法连接后端服务');
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function formatTime(timeStr) {
+  return timeStr ? timeStr.slice(5, 16) : '';
+}
+
+calcBtn.addEventListener('click', calculate);
+expressionInput.addEventListener('keydown', e => { if (e.key === 'Enter') calculate(); });
+loadHistory();
+</script>
+
+</body>
+</html>
