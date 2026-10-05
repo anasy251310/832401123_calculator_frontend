@@ -21,7 +21,7 @@
 
 - 字符串统一使用单引号。
 
-const API_BASE = 'http://127.0.0.1:5000';
+const API_BASE = 'https://eight32401123-calculator-backend-1.onrender.com';
 
 ## 5. 变量声明
 
