@@ -20,7 +20,7 @@ body {
   border-radius: 16px;
   padding: 32px;
   text-align: center;
-  max-width: 520px;
+  max-width: 560px;
   width: 100%;
 }
 </style>
@@ -45,21 +45,54 @@ body {
     <button onclick="clearInput()">C</button>
   </div>
 
+  <div>
+    <button onclick="appendFunc('sin(')">sin</button>
+    <button onclick="appendFunc('cos(')">cos</button>
+    <button onclick="appendFunc('tan(')">tan</button>
+    <button onclick="appendFunc('sqrt(')">√</button>
+    <button onclick="appendFunc('log(')">log</button>
+    <button onclick="append('pi')">π</button>
+    <button onclick="append('e')">e</button>
+  </div>
+
   <p>结果：<span id="result">—</span></p>
 
-  <h2>计算历史</h2>
+  <h2>计算历史 <button onclick="clearAllHistory()">清空全部</button></h2>
   <ul id="historyList"><li>暂无记录</li></ul>
 </div>
 
 <script>
-const API_BASE = 'http://127.0.0.1:5000';
+const API_BASE = 'https://eight32401123-calculator-backend-1.onrender.com';
 const expressionInput = document.getElementById('expression');
 const calcBtn = document.getElementById('calcBtn');
 const resultSpan = document.getElementById('result');
 const historyList = document.getElementById('historyList');
 
-function append(char) { expressionInput.value += char; expressionInput.focus(); }
-function clearInput() { expressionInput.value = ''; expressionInput.focus(); }
+function append(char) {
+  const start = expressionInput.selectionStart;
+  const end = expressionInput.selectionEnd;
+  const value = expressionInput.value;
+  expressionInput.value = value.slice(0, start) + char + value.slice(end);
+  const pos = start + char.length;
+  expressionInput.setSelectionRange(pos, pos);
+  expressionInput.focus();
+}
+
+function appendFunc(text) {
+  const start = expressionInput.selectionStart;
+  const end = expressionInput.selectionEnd;
+  const value = expressionInput.value;
+  const insert = text + ')';
+  expressionInput.value = value.slice(0, start) + insert + value.slice(end);
+  const pos = start + insert.length - 1;
+  expressionInput.setSelectionRange(pos, pos);
+  expressionInput.focus();
+}
+
+function clearInput() {
+  expressionInput.value = '';
+  expressionInput.focus();
+}
 
 async function calculate() {
   const expression = expressionInput.value.trim();
@@ -112,6 +145,18 @@ async function deleteRecord(id) {
     const data = await response.json();
     if (data.success) { await loadHistory(); }
     else { alert('删除失败：' + data.message); }
+  } catch (error) {
+    alert('无法连接后端服务');
+  }
+}
+
+async function clearAllHistory() {
+  if (!confirm('确定要清空所有历史记录吗？')) return;
+  try {
+    const response = await fetch(`${API_BASE}/api/history`, { method: 'DELETE' });
+    const data = await response.json();
+    if (data.success) { await loadHistory(); }
+    else { alert('清空失败：' + data.message); }
   } catch (error) {
     alert('无法连接后端服务');
   }
